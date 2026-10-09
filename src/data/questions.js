@@ -100,3 +100,23 @@ export function makeColorQuestion() {
     choices: shuffle(colors.map(({ name, color, emoji }) => ({ name, color, emoji })))
   };
 }
+
+export function makeAdditionQuestion() {
+  const firstCount = Math.floor(Math.random() * 4) + 1;
+  const secondCount = Math.floor(Math.random() * (5 - firstCount)) + 1;
+  const target = firstCount + secondCount;
+  const targetItem = COUNTING_ITEMS[Math.floor(Math.random() * COUNTING_ITEMS.length)];
+  const objectName = (count) => count === 1 ? targetItem.name : targetItem.plural;
+  const firstPhrase = `${firstCount} ${objectName(firstCount)}`;
+  const secondPhrase = `${secondCount} more ${objectName(secondCount)} ${secondCount === 1 ? "joins" : "join"} them`;
+  return {
+    kind: "addition",
+    prompt: `How many ${targetItem.plural} altogether?`,
+    spokenPrompt: `You have ${firstPhrase}. ${secondPhrase}. How many ${targetItem.plural} are there altogether?`,
+    targetItem,
+    firstCount,
+    secondCount,
+    target,
+    choices: shuffle([target, ...pickRandom([1, 2, 3, 4, 5].filter((number) => number !== target), 2)])
+  };
+}

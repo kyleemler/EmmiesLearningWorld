@@ -5,11 +5,14 @@ function readSavedState() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
     return {
       stars: Number.isInteger(saved.stars) && saved.stars >= 0 ? saved.stars : 0,
-      soundEnabled: typeof saved.soundEnabled === "boolean" ? saved.soundEnabled : true
+      soundEnabled: typeof saved.soundEnabled === "boolean" ? saved.soundEnabled : true,
+      completedActivities: Array.isArray(saved.completedActivities)
+        ? saved.completedActivities.filter((id) => typeof id === "string")
+        : []
     };
   } catch (error) {
     console.warn("Could not read saved game settings.", error);
-    return { stars: 0, soundEnabled: true };
+    return { stars: 0, soundEnabled: true, completedActivities: [] };
   }
 }
 
@@ -17,7 +20,8 @@ const savedState = readSavedState();
 
 export const gameState = {
   stars: savedState.stars,
-  soundEnabled: savedState.soundEnabled
+  soundEnabled: savedState.soundEnabled,
+  completedActivities: savedState.completedActivities
 };
 
 export function saveState() {
@@ -31,6 +35,13 @@ export function saveState() {
 export function addStars(amount) {
   gameState.stars += amount;
   saveState();
+}
+
+export function markActivityComplete(activityId) {
+  if (gameState.completedActivities.includes(activityId)) return false;
+  gameState.completedActivities.push(activityId);
+  saveState();
+  return true;
 }
 
 export function toggleSound() {

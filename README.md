@@ -1,6 +1,6 @@
 # Emmie's Learning World
 
-A cheerful, browser-based learning game for letters, counting, and colors. It is built with HTML, CSS, and vanilla JavaScript, with Vite for local development.
+A cheerful, touch-friendly browser game for letters, counting, addition, and colors. It is built with HTML, CSS, and vanilla JavaScript, with Vite for local development.
 
 ## Run it locally
 
@@ -51,7 +51,7 @@ Stars and sound settings are stored locally in each browser. The game itself can
 - `src/main.js` — starts the game and connects the modules.
 - `src/navigation.js` — screen transitions and shared screen controls.
 - `src/game.js` — reusable five-question activity flow and feedback.
-- `src/activities/` — the three activity definitions.
+- `src/activities/` — the four activity definitions.
 - `src/data/questions.js` — activity content and question generation.
 - `src/state.js` — locally saved sound and star settings.
 - `src/audio.js` — optional generated sounds and spoken instructions.
@@ -62,4 +62,4 @@ Stars and sound settings are stored locally in each browser. The game itself can
 
 Each activity in `src/activities/` supplies a title, visual style, question generator, and spoken prompt. Add or edit reusable question choices in `src/data/questions.js`; the shared game flow takes care of shuffling choices, retries, progress, and rewards. Letter-sound choices are curated so confusing alternatives such as C and K are never offered together for the same sound.
 
-Stars and the sound preference are stored in the browser's `localStorage` on the current device. No account or backend is used. Sound starts only after a player interaction and can be turned off at any time.
+Stars, completed adventures, and the sound preference are stored in the browser's `localStorage` on the current device. The village is navigated with taps or clicks: tap the path or grass to hop around, or choose a house and tap the enter button when the bunny arrives. Every activity stays open for replay; completed adventures light up the trail, and empty building lots leave room for future games. Addition questions randomly use the same objects as the counting activity. No account or backend is used. Sound starts only after a player interaction and can be turned off at any time.

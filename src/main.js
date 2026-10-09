@@ -9,8 +9,10 @@ import "./styles.css";
 const root = document.querySelector("#app");
 const navigation = new Navigation(root);
 let game;
-let moving = false;
 let hopTimer;
+let moveTimer;
+let pendingActivity = null;
+let villageScene;
 
 function showMenu() {
   navigation.show(`
@@ -61,6 +63,17 @@ function buildingArt(id) {
       <text x="115" y="88" text-anchor="middle" fill="#a4653d" font-size="20" font-family="Georgia" font-weight="bold">BAKE</text>
     </svg>`;
   }
+  if (id === "addition") {
+    return `<svg class="building-art addition-art" viewBox="0 0 230 180" aria-hidden="true">
+      <path d="M28 109q10-48 87-51 77 3 87 51l-16 54H45z" fill="#75c8d0" stroke="#498d9c" stroke-width="5"/>
+      <path d="M39 117q76-21 152 0" fill="none" stroke="#b5eff0" stroke-width="5" stroke-linecap="round"/>
+      <path d="M55 64h120l-13-31H68z" fill="#e8ba79" stroke="#a5794c" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M67 33q10-19 21 0m18 0q10-19 21 0m18 0q10-19 21 0" fill="#fff2cc" stroke="#a5794c" stroke-width="4"/>
+      <g fill="#ffcf6c" stroke="#fff4d9" stroke-width="3"><circle cx="76" cy="109" r="16"/><circle cx="115" cy="126" r="16"/><circle cx="155" cy="107" r="16"/></g>
+      <path d="M104 148h22m-11-11v22" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+      <path d="M40 159q-10-20 5-29m141 29q10-20-5-29" fill="none" stroke="#55ae75" stroke-width="6" stroke-linecap="round"/>
+    </svg>`;
+  }
   return `<svg class="building-art garden-art" viewBox="0 0 230 180" aria-hidden="true">
     <path d="M43 86a72 72 0 0 1 144 0" fill="none" stroke="#e87981" stroke-width="13"/>
     <path d="M55 86a60 60 0 0 1 120 0" fill="none" stroke="#ffba68" stroke-width="12"/>
@@ -77,11 +90,17 @@ function buildingArt(id) {
 }
 
 function showVillage() {
+  const orderedActivities = Object.values(activities);
+  const nextActivity = orderedActivities.find(({ id }) => !gameState.completedActivities.includes(id));
   navigation.show(`
     <div class="village-header">
-      <div class="welcome-pill"><img src="${mascotUrl}" alt="" /><span>Where shall we go?</span></div>
+      <div class="welcome-pill" aria-label="Tap the path to guide the bunny"><img src="${mascotUrl}" alt="" /><span>Tap the path to guide me!</span></div>
       <div class="village-tools">
         <div class="star-total" aria-label="${gameState.stars} stars earned">⭐ <span>${gameState.stars}</span></div>
+        <div class="map-progress" aria-label="${gameState.completedActivities.length} of ${orderedActivities.length} adventures explored">
+          <span class="map-progress-label">Adventures</span>
+          <span class="map-progress-dots">${orderedActivities.map(({ id }, index) => `<i class="${gameState.completedActivities.includes(id) ? "is-done" : ""} ${id === nextActivity?.id ? "is-next" : ""}" aria-hidden="true">${gameState.completedActivities.includes(id) ? "✓" : index + 1}</i>`).join("")}</span>
+        </div>
         ${navigation.soundButton()}
       </div>
     </div>
@@ -91,46 +110,102 @@ function showVillage() {
         <div class="distant-hills"></div>
       </div>
       <div class="village-grass"></div>
-      <div class="village-path"></div>
+      <svg class="village-roads" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
+        <path class="road-edge" d="M505 710 C460 630 560 575 500 510 C440 445 530 380 500 310 M500 465 C390 420 300 458 220 395 C145 337 90 360 25 330 M500 430 C620 390 710 445 795 390 C875 338 935 358 990 325"/>
+        <path class="road-surface" d="M505 710 C460 630 560 575 500 510 C440 445 530 380 500 310 M500 465 C390 420 300 458 220 395 C145 337 90 360 25 330 M500 430 C620 390 710 445 795 390 C875 338 935 358 990 325"/>
+        <path class="road-dashes" d="M505 710 C460 630 560 575 500 510 C440 445 530 380 500 310 M500 465 C390 420 300 458 220 395 C145 337 90 360 25 330 M500 430 C620 390 710 445 795 390 C875 338 935 358 990 325"/>
+      </svg>
       <div class="trees tree-left"><span>🌳</span></div><div class="trees tree-right"><span>🌲</span></div>
       <div class="bush bush-left"></div><div class="bush bush-right"></div>
       <div class="village-buildings">
-        ${Object.values(activities).map((activity) => `<button class="location location-${activity.id}" type="button" data-location="${activity.id}" aria-label="Visit ${activity.title}">
+        ${orderedActivities.map((activity, index) => {
+          const isDone = gameState.completedActivities.includes(activity.id);
+          const isNext = activity.id === nextActivity?.id;
+          return `<button class="location location-${activity.id} ${isDone ? "location-done" : ""} ${isNext ? "location-next" : ""}" type="button" data-location="${activity.id}" aria-label="Hop to ${activity.title}${isDone ? ", completed, replay anytime" : ""}">
+          <span class="trail-marker ${isDone ? "is-done" : ""} ${isNext ? "is-next" : ""}" aria-hidden="true">${isDone ? "✓" : index + 1}</span>
           <span class="building-label">${activity.title}</span>
           ${buildingArt(activity.id)}
-          <span class="location-glow">${activity.emoji}</span>
-        </button>`).join("")}
+          <span class="location-glow" aria-hidden="true">${activity.emoji}</span>
+        </button>`;
+        }).join("")}
+      </div>
+      <div class="future-lots" aria-label="Two future places for new games">
+        <div class="future-lot ${nextActivity ? "" : "lot-next"}"><span class="lot-art">🌱</span><span class="lot-label">${nextActivity ? "A new game will grow here!" : "More games soon!"}</span><span class="lot-marker" aria-hidden="true">${nextActivity ? "✦" : "＋"}</span></div>
+        <div class="future-lot"><span class="lot-art">🪧</span><span class="lot-label">A little space for later</span></div>
       </div>
       <div class="path-flowers flowers-left" aria-hidden="true">🌼　🌷　🌼</div>
       <div class="path-flowers flowers-right" aria-hidden="true">🌷　🌼　🌸</div>
-      <div class="village-sign">A cozy place to learn <span>✦</span></div>
-      <img class="village-mascot" src="${mascotUrl}" alt="Your bunny friend in the village" />
-      <div class="tap-hint">Tap a place to play!</div>
+      <button class="enter-location" type="button" aria-label="Enter this learning game" hidden>🚪<span>Let's play!</span></button>
+      <img class="village-mascot" src="${mascotUrl}" alt="Your bunny friend. Tap the path or grass to hop around." />
+      <div class="tap-hint">Tap the grass to hop • tap a house to visit</div>
     </div>
   `, "village");
+  villageScene = root.querySelector(".village-scene");
+  villageScene.addEventListener("pointerdown", handleVillageTap);
   root.querySelectorAll(".location").forEach((building) => {
-    building.addEventListener("click", () => enterLocation(building));
+    building.addEventListener("click", () => moveToLocation(building));
+  });
+  root.querySelector(".enter-location").addEventListener("click", () => {
+    if (pendingActivity) {
+      audio.button();
+      game.start(pendingActivity);
+    }
   });
 }
 
-function enterLocation(building) {
-  if (moving) return;
-  moving = true;
-  const mascot = root.querySelector(".village-mascot");
+function handleVillageTap(event) {
+  if (event.target.closest("button, .village-header")) return;
+  const bounds = villageScene.getBoundingClientRect();
+  moveMascot(
+    ((event.clientX - bounds.left) / bounds.width) * 100,
+    ((event.clientY - bounds.top) / bounds.height) * 100
+  );
+}
+
+function moveToLocation(building) {
   const bounds = building.getBoundingClientRect();
-  const sceneBounds = root.querySelector(".village-scene").getBoundingClientRect();
-  const destination = Math.max(13, Math.min(83, ((bounds.left + bounds.width / 2 - sceneBounds.left) / sceneBounds.width) * 100));
-  mascot.style.setProperty("--destination", `${destination}%`);
+  const sceneBounds = villageScene.getBoundingClientRect();
+  const mascotHeight = root.querySelector(".village-mascot").getBoundingClientRect().height;
+  pendingActivity = activities[building.dataset.location];
+  root.querySelectorAll(".location").forEach((location) => location.classList.toggle("location-selected", location === building));
+  moveMascot(
+    ((bounds.left + bounds.width / 2 - sceneBounds.left) / sceneBounds.width) * 100,
+    ((bounds.bottom - sceneBounds.top - mascotHeight * 0.65) / sceneBounds.height) * 100,
+    pendingActivity
+  );
+}
+
+function moveMascot(x, y, destinationActivity = null) {
+  const mascot = root.querySelector(".village-mascot");
+  const sceneBounds = villageScene.getBoundingClientRect();
+  const currentX = Number.parseFloat(mascot.style.left) || 50;
+  const currentY = Number.parseFloat(mascot.style.top) || 82;
+  const destinationX = Math.min(94, Math.max(6, x));
+  const destinationY = Math.min(87, Math.max(23, y));
+  const distance = Math.hypot(
+    (destinationX - currentX) * sceneBounds.width / 100,
+    (destinationY - currentY) * sceneBounds.height / 100
+  );
+  const duration = Math.max(800, Math.min(3600, distance * 3.4));
+  window.clearInterval(hopTimer);
+  window.clearTimeout(moveTimer);
+  pendingActivity = destinationActivity;
+  root.querySelector(".enter-location").hidden = true;
+  mascot.style.setProperty("--travel-duration", `${duration}ms`);
+  mascot.style.left = `${destinationX}%`;
+  mascot.style.top = `${destinationY}%`;
   mascot.classList.add("mascot-walking");
-  building.classList.add("location-selected");
   audio.hop();
   hopTimer = window.setInterval(() => audio.hop(), 520);
-  window.setTimeout(() => {
+  moveTimer = window.setTimeout(() => {
     window.clearInterval(hopTimer);
     mascot.classList.remove("mascot-walking");
-    moving = false;
-    game.start(activities[building.dataset.location]);
-  }, 3600);
+    if (!pendingActivity) return;
+    const enterButton = root.querySelector(".enter-location");
+    enterButton.style.left = `${destinationX}%`;
+    enterButton.style.top = `${Math.max(15, destinationY - 10)}%`;
+    enterButton.hidden = false;
+  }, duration);
 }
 
 game = new MiniGame(navigation, showVillage);

@@ -1,4 +1,4 @@
-import { makeColorQuestion, makeLetterQuestion, makeNumberQuestion } from "../data/questions.js";
+import { makeAdditionQuestion, makeColorQuestion, makeLetterQuestion, makeNumberQuestion } from "../data/questions.js";
 
 export const activities = {
   letters: {
@@ -30,5 +30,15 @@ export const activities = {
     introduction: "Let's find a color!",
     makeQuestion: makeColorQuestion,
     sayQuestion: (question) => question.prompt
+  },
+  addition: {
+    id: "addition",
+    title: "Addition Pond",
+    name: "Addition",
+    emoji: "➕",
+    theme: "addition",
+    introduction: "Let's put some groups together!",
+    makeQuestion: makeAdditionQuestion,
+    sayQuestion: (question) => question.spokenPrompt
   }
 };

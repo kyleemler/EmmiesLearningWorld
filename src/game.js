@@ -1,5 +1,5 @@
 import { audio } from "./audio.js";
-import { addStars, gameState } from "./state.js";
+import { addStars, gameState, markActivityComplete } from "./state.js";
 import mascotUrl from "./assets/mascot.svg";
 
 const ROUND_LENGTH = 5;
@@ -102,6 +102,14 @@ export class MiniGame {
   }
 
   questionVisual(question) {
+    if (question.kind === "addition") {
+      const nameForCount = (count) => count === 1 ? question.targetItem.name : question.targetItem.plural;
+      return `<div class="addition-objects" role="img" aria-label="${question.firstCount} ${nameForCount(question.firstCount)} plus ${question.secondCount} ${nameForCount(question.secondCount)}">
+        <span class="addition-group">${question.targetItem.emoji.repeat(question.firstCount)}</span>
+        <span class="addition-sign" aria-hidden="true">+</span>
+        <span class="addition-group">${question.targetItem.emoji.repeat(question.secondCount)}</span>
+      </div>`;
+    }
     if (question.kind === "numbers") {
       const counts = question.objects.reduce((result, item) => {
         result[item.name] ??= { count: 0, plural: item.plural };
@@ -162,6 +170,7 @@ export class MiniGame {
   showReward() {
     const earned = ROUND_LENGTH;
     addStars(earned);
+    markActivityComplete(this.activity.id);
     audio.celebrate();
     this.navigation.show(`
       <header class="game-topbar">
