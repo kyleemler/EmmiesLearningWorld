@@ -21,6 +21,7 @@ export class Navigation {
       this.root.querySelector(".sound-button").setAttribute("aria-label", label);
       this.root.querySelector(".sound-button").setAttribute("title", label);
       this.root.querySelector(".sound-button").textContent = enabled ? "🔊" : "🔇";
+      this.root.querySelector(".screen")?.classList.toggle("screen-no-speech", !enabled || !audio.canSpeak());
     });
   }
 

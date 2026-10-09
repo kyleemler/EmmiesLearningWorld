@@ -42,7 +42,6 @@ export class MiniGame {
     });
     this.navigation.root.querySelector(".play-activity").addEventListener("click", () => {
       audio.button();
-      audio.speak(this.activity.introduction);
       this.showQuestion();
     });
     this.navigation.root.querySelector(".speak-button").addEventListener("click", () => {
@@ -73,9 +72,10 @@ export class MiniGame {
       <div class="activity-wrap">
         <div class="activity-card question-card theme-${this.activity.theme}">
           <div class="question-number">${this.questionIndex + 1}<span> / ${ROUND_LENGTH}</span></div>
-          <h1 class="question-prompt">${question.kind === "letters"
-            ? `Find the letter <strong class="target-letter">${question.target}</strong>`
-            : question.kind === "colors" ? "Find this color!" : question.prompt}</h1>
+          <h1 class="question-prompt ${question.kind === "colors" ? "audio-only-prompt" : ""}">${question.kind === "letters"
+            ? "Which letter makes this sound?"
+            : question.kind === "colors" ? "Listen to the color!" : question.prompt}</h1>
+          ${question.kind === "colors" ? `<p class="silent-question-prompt">${question.prompt}</p>` : ""}
           ${this.questionVisual(question)}
           <div class="answer-options ${question.kind === "letters" ? "letter-options" : ""}" role="group" aria-label="Answer choices">
             ${question.choices.map((choice) => this.answerButton(question, choice)).join("")}
@@ -86,6 +86,7 @@ export class MiniGame {
       </div>
     `, "activity");
     const root = this.navigation.root;
+    root.classList.toggle("screen-no-speech", !gameState.soundEnabled || !audio.canSpeak());
     root.querySelector(".back-button").addEventListener("click", () => {
       audio.button();
       this.onReturnToVillage();
@@ -97,15 +98,25 @@ export class MiniGame {
     root.querySelectorAll(".answer-choice").forEach((button) => {
       button.addEventListener("click", () => this.checkAnswer(button, question));
     });
+    audio.speak(this.activity.sayQuestion(question));
   }
 
   questionVisual(question) {
     if (question.kind === "numbers") {
-      return `<div class="counting-objects" aria-label="${question.objects.length} objects">${question.objects.map((item) => `<span>${item}</span>`).join("")}</div>`;
+      const counts = question.objects.reduce((result, item) => {
+        result[item.name] ??= { count: 0, plural: item.plural };
+        result[item.name].count += 1;
+        return result;
+      }, {});
+      const objectSummary = Object.entries(counts)
+        .map(([name, item]) => `${item.count} ${item.count === 1 ? name : item.plural}`)
+        .join(" and ");
+      return `<div class="counting-objects" role="img" aria-label="${objectSummary}">${question.objects.map((item) => `<span aria-hidden="true">${item.emoji}</span>`).join("")}</div>`;
     }
-    if (question.kind === "colors") {
-      const target = question.choices.find(({ name }) => name === question.target);
-      return `<div class="color-target" aria-label="Match the color ${target.name}"><span class="color-orb" style="--choice-color:${target.color}">${target.emoji}</span></div>`;
+    if (question.kind === "letters") {
+      return `<div class="sound-cue" aria-label="The ${question.sound} sound, like in ${question.example}">
+        <span>“${question.sound}”</span><small>like in ${question.example}</small>
+      </div>`;
     }
     return "";
   }

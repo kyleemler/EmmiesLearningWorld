@@ -10,6 +10,7 @@ const root = document.querySelector("#app");
 const navigation = new Navigation(root);
 let game;
 let moving = false;
+let hopTimer;
 
 function showMenu() {
   navigation.show(`
@@ -122,12 +123,14 @@ function enterLocation(building) {
   mascot.style.setProperty("--destination", `${destination}%`);
   mascot.classList.add("mascot-walking");
   building.classList.add("location-selected");
-  audio.button();
+  audio.hop();
+  hopTimer = window.setInterval(() => audio.hop(), 520);
   window.setTimeout(() => {
+    window.clearInterval(hopTimer);
     mascot.classList.remove("mascot-walking");
     moving = false;
     game.start(activities[building.dataset.location]);
-  }, 780);
+  }, 3600);
 }
 
 game = new MiniGame(navigation, showVillage);

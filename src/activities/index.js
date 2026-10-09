@@ -9,7 +9,7 @@ export const activities = {
     theme: "letters",
     introduction: "Let's find some letters!",
     makeQuestion: makeLetterQuestion,
-    sayQuestion: (question) => `Can you find the letter ${question.target}?`
+    sayQuestion: (question) => question.prompt
   },
   numbers: {
     id: "numbers",
@@ -19,9 +19,7 @@ export const activities = {
     theme: "numbers",
     introduction: "Let's count together!",
     makeQuestion: makeNumberQuestion,
-    sayQuestion: (question) => question.kind === "numbers"
-      ? "How many do you see?"
-      : question.prompt
+    sayQuestion: (question) => question.prompt
   },
   colors: {
     id: "colors",
@@ -31,6 +29,6 @@ export const activities = {
     theme: "colors",
     introduction: "Let's find a color!",
     makeQuestion: makeColorQuestion,
-    sayQuestion: (question) => `Can you find ${question.target}?`
+    sayQuestion: (question) => question.prompt
   }
 };

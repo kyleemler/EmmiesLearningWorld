@@ -17,6 +17,10 @@ class AudioManager {
     return this.context;
   }
 
+  canSpeak() {
+    return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+  }
+
   tone(frequency, duration = 0.12, wave = "sine", volume = 0.08, delay = 0) {
     if (!gameState.soundEnabled) return;
     const context = this.getContext();
@@ -37,6 +41,11 @@ class AudioManager {
 
   button() {
     this.tone(720, 0.07, "sine", 0.035);
+  }
+
+  hop() {
+    this.tone(300, 0.11, "triangle", 0.035);
+    this.tone(470, 0.09, "sine", 0.025, 0.05);
   }
 
   correct() {
@@ -79,7 +88,7 @@ class AudioManager {
   }
 
   speak(text) {
-    if (!("speechSynthesis" in window) || !gameState.soundEnabled) return;
+    if (!this.canSpeak() || !gameState.soundEnabled) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.82;

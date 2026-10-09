@@ -60,6 +60,6 @@ Stars and sound settings are stored locally in each browser. The game itself can
 
 ## Adding learning content
 
-Each activity in `src/activities/` supplies a title, visual style, question generator, and spoken prompt. Add or edit reusable question choices in `src/data/questions.js`; the shared game flow takes care of shuffling choices, retries, progress, and rewards.
+Each activity in `src/activities/` supplies a title, visual style, question generator, and spoken prompt. Add or edit reusable question choices in `src/data/questions.js`; the shared game flow takes care of shuffling choices, retries, progress, and rewards. Letter-sound choices are curated so confusing alternatives such as C and K are never offered together for the same sound.
 
 Stars and the sound preference are stored in the browser's `localStorage` on the current device. No account or backend is used. Sound starts only after a player interaction and can be turned off at any time.
